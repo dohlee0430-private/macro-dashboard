@@ -7,6 +7,7 @@ import { ForexWidget } from "@/components/widgets/ForexWidget";
 import { M2Widget } from "@/components/widgets/M2Widget";
 import { PolicyWidget } from "@/components/widgets/PolicyWidget";
 import { RealEstateWidget } from "@/components/widgets/RealEstateWidget";
+import { IndicatorsWidget } from "@/components/widgets/IndicatorsWidget";
 import { useTheme } from "@/lib/theme";
 
 export default function DashboardPage() {
@@ -52,7 +53,12 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        {/* Row 2: M2 */}
+        {/* Row 2: US Indicators */}
+        <section>
+          <IndicatorsWidget />
+        </section>
+
+        {/* Row 3: M2 */}
         <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <M2Widget endpoint="/api/m2" title="미국 M2 통화량" color="#3b82f6" />
           <M2Widget endpoint="/api/korea-m2" title="한국 M2 통화량" color="#f59e0b" />

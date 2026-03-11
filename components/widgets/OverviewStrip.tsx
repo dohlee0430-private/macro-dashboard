@@ -16,6 +16,7 @@ export function OverviewStrip() {
   const { data: market } = useSWR("/api/market", fetcher, { refreshInterval: 300_000 });
   const { data: crypto } = useSWR("/api/crypto", fetcher, { refreshInterval: 60_000 });
   const { data: forex } = useSWR("/api/forex", fetcher, { refreshInterval: 300_000 });
+  const { data: indicators } = useSWR("/api/indicators", fetcher, { refreshInterval: 300_000 });
 
   const tickers: Ticker[] = [];
 
@@ -33,6 +34,24 @@ export function OverviewStrip() {
       label: "USD/KRW",
       value: "₩" + forex.rate.toLocaleString("ko-KR"),
       change: forex.changePct,
+    });
+  }
+
+  // Gold
+  if (indicators?.gold?.price) {
+    tickers.push({
+      label: "GOLD",
+      value: "$" + indicators.gold.price.toLocaleString("en-US", { maximumFractionDigits: 0 }),
+      change: indicators.gold.changePct,
+    });
+  }
+
+  // VIX
+  if (indicators?.vix?.value) {
+    tickers.push({
+      label: "VIX",
+      value: indicators.vix.value.toFixed(1),
+      change: indicators.vix.changePct,
     });
   }
 
