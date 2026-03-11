@@ -30,6 +30,27 @@ const RSS_SOURCES = [
     country: "US" as const,
     category: "재정정책",
   },
+  // Google News RSS — 한국 경제정책 키워드
+  {
+    url: "https://news.google.com/rss/search?q=%ED%95%9C%EA%B5%AD+%EA%B2%BD%EC%A0%9C%EC%A0%95%EC%B1%85&hl=ko&gl=KR&ceid=KR:ko",
+    source: "Google News",
+    country: "KR" as const,
+    category: "경제정책",
+  },
+  // Google News RSS — 한국은행 통화정책
+  {
+    url: "https://news.google.com/rss/search?q=%ED%95%9C%EA%B5%AD%EC%9D%80%ED%96%89+%EA%B8%88%EB%A6%AC&hl=ko&gl=KR&ceid=KR:ko",
+    source: "Google News",
+    country: "KR" as const,
+    category: "통화정책",
+  },
+  // Google News RSS — US economy policy
+  {
+    url: "https://news.google.com/rss/search?q=US+economic+policy+federal+reserve&hl=en-US&gl=US&ceid=US:en",
+    source: "Google News",
+    country: "US" as const,
+    category: "경제정책",
+  },
 ];
 
 // Simple XML tag extractor (avoids xml parser dependency)

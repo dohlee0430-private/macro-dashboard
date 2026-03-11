@@ -19,7 +19,6 @@ export function OverviewStrip() {
 
   const tickers: Ticker[] = [];
 
-  // Market indices
   for (const idx of market?.indices ?? []) {
     if (idx.price === null) continue;
     tickers.push({
@@ -29,7 +28,6 @@ export function OverviewStrip() {
     });
   }
 
-  // Forex
   if (forex?.rate) {
     tickers.push({
       label: "USD/KRW",
@@ -38,7 +36,6 @@ export function OverviewStrip() {
     });
   }
 
-  // Crypto
   for (const coin of crypto?.coins ?? []) {
     tickers.push({
       label: coin.symbol,
@@ -56,13 +53,13 @@ export function OverviewStrip() {
 
   if (tickers.length === 0) {
     return (
-      <div className="bg-gray-900/50 border-b border-gray-800 py-3">
+      <div className="bg-[var(--bg-card)]/50 border-b border-[var(--border)] py-3">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex gap-6 overflow-x-auto">
             {[1, 2, 3, 4, 5, 6, 7].map((i) => (
               <div key={i} className="flex items-center gap-2 animate-pulse">
-                <div className="h-3 w-10 bg-gray-800 rounded" />
-                <div className="h-4 w-16 bg-gray-800 rounded" />
+                <div className="h-3 w-10 bg-[var(--border)] rounded" />
+                <div className="h-4 w-16 bg-[var(--border)] rounded" />
               </div>
             ))}
           </div>
@@ -72,20 +69,20 @@ export function OverviewStrip() {
   }
 
   return (
-    <div className="bg-gray-900/50 border-b border-gray-800 py-2">
+    <div className="bg-[var(--bg-card)]/50 border-b border-[var(--border)] py-2">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex gap-4 overflow-x-auto scrollbar-hide">
           {tickers.map((t, i) => (
             <div key={t.label} className="flex items-center gap-1.5 shrink-0">
-              {i > 0 && <div className="w-px h-3 bg-gray-800 -ml-1 mr-0.5" />}
-              <span className="text-[10px] text-gray-500 font-medium">{t.label}</span>
-              <span className="text-xs text-white font-mono font-semibold">{t.value}</span>
-              {t.sub && <span className="text-[10px] text-gray-500">{t.sub}</span>}
+              {i > 0 && <div className="w-px h-3 bg-[var(--border)] -ml-1 mr-0.5" />}
+              <span className="text-[10px] text-[var(--text-faint)] font-medium">{t.label}</span>
+              <span className="text-xs text-[var(--text-primary)] font-mono font-semibold">{t.value}</span>
+              {t.sub && <span className="text-[10px] text-[var(--text-faint)]">{t.sub}</span>}
               {t.change !== null && (
                 <span
                   className={clsx(
                     "text-[10px] font-mono font-medium",
-                    t.change > 0 ? "text-emerald-400" : t.change < 0 ? "text-red-400" : "text-gray-400"
+                    t.change > 0 ? "text-emerald-500" : t.change < 0 ? "text-red-500" : "text-[var(--text-faint)]"
                   )}
                 >
                   {t.change > 0 ? "+" : ""}{t.change.toFixed(2)}%

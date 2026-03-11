@@ -1,15 +1,11 @@
 "use client";
 
 import useSWR from "swr";
-import {
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  YAxis,
-  Tooltip,
-} from "recharts";
 import { Card, ChangeIndicator, LoadingCard, ErrorCard } from "@/components/ui/Card";
+import { LightweightChart } from "@/components/ui/LightweightChart";
 import { formatPrice } from "@/lib/formatters";
+import { useTheme } from "@/lib/theme";
+import { useState } from "react";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -33,92 +29,97 @@ function formatKrw(n: number | null): string {
 }
 
 export function CryptoWidget() {
-  const { data, error, isLoading } = useSWR("/api/crypto", fetcher, {
-    refreshInterval: 60_000,
-  });
+  const { data, error, isLoading } = useSWR("/api/crypto", fetcher, { refreshInterval: 60_000 });
+  const [selected, setSelected] = useState("bitcoin");
+  const { theme } = useTheme();
 
   if (isLoading) return <LoadingCard title="암호화폐" />;
   if (error || data?.error) return <ErrorCard title="암호화폐" />;
 
+  const coins: Coin[] = data?.coins ?? [];
+  const active = coins.find((c) => c.id === selected) ?? coins[0];
+
+  // Convert sparkline to chart data (7 days, ~168 data points)
+  const now = Date.now();
+  const sparkChartData = (active?.sparkline ?? [])
+    .filter((_, i) => i % 3 === 0)
+    .map((v, i, arr) => {
+      const msAgo = (arr.length - i) * 3 * 3600_000; // ~3 hours per point after filter
+      const d = new Date(now - msAgo);
+      return {
+        time: d.toISOString().split("T")[0],
+        value: v,
+      };
+    })
+    // Deduplicate by date (keep last)
+    .reduce<{ time: string; value: number }[]>((acc, item) => {
+      const existing = acc.findIndex((a) => a.time === item.time);
+      if (existing >= 0) acc[existing] = item;
+      else acc.push(item);
+      return acc;
+    }, []);
+
   return (
     <Card title="암호화폐">
-      <div className="flex flex-col gap-5">
-        {data.coins?.map((coin: Coin) => (
-          <CoinRow key={coin.id} coin={coin} />
+      {/* Coin selector */}
+      <div className="flex gap-2">
+        {coins.map((coin) => (
+          <button
+            key={coin.id}
+            onClick={() => setSelected(coin.id)}
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg flex-1 transition-colors ${
+              selected === coin.id
+                ? "bg-[var(--bg-card-hover)] ring-1 ring-[var(--border)]"
+                : "hover:bg-[var(--bg-card-hover)]"
+            }`}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={coin.image} alt={coin.name} className="w-5 h-5 rounded-full" />
+            <div className="text-left min-w-0">
+              <div className="text-xs font-bold text-[var(--text-primary)]">{coin.symbol}</div>
+              <div className="text-[10px] text-[var(--text-faint)] truncate">
+                {formatPrice(coin.priceUsd, "USD")}
+              </div>
+            </div>
+            <ChangeIndicator value={coin.change24h} size="xs" />
+          </button>
         ))}
       </div>
-    </Card>
-  );
-}
 
-function CoinRow({ coin }: { coin: Coin }) {
-  const sparkData = coin.sparkline
-    .filter((_, i) => i % 4 === 0) // downsample for performance
-    .map((v, i) => ({ i, v }));
-
-  return (
-    <div className="flex flex-col gap-2">
-      {/* Header: icon + name + price */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={coin.image} alt={coin.name} className="w-7 h-7 rounded-full" />
+      {/* Active coin detail */}
+      {active && (
+        <div className="flex items-end justify-between">
           <div>
-            <span className="font-bold text-white text-sm">{coin.symbol}</span>
-            <span className="text-xs text-gray-500 ml-1.5">{coin.name}</span>
-          </div>
-        </div>
-        <div className="text-right">
-          <div className="text-white font-mono font-bold text-lg">
-            {formatPrice(coin.priceUsd, "USD")}
-          </div>
-          {coin.priceKrw && (
-            <div className="text-xs text-gray-400 font-mono">
-              {formatKrw(coin.priceKrw)}
+            <div className="text-2xl font-bold text-[var(--text-primary)] font-mono">
+              {formatPrice(active.priceUsd, "USD")}
             </div>
-          )}
+            {active.priceKrw && (
+              <div className="text-xs text-[var(--text-muted)] font-mono">{formatKrw(active.priceKrw)}</div>
+            )}
+          </div>
+          <div className="flex gap-3 text-xs">
+            <div className="text-right">
+              <div className="text-[10px] text-[var(--text-faint)]">24h</div>
+              <ChangeIndicator value={active.change24h} size="xs" />
+            </div>
+            <div className="text-right">
+              <div className="text-[10px] text-[var(--text-faint)]">7d</div>
+              <ChangeIndicator value={active.change7d} size="xs" />
+            </div>
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Changes + sparkline */}
-      <div className="flex items-center justify-between">
-        <div className="flex gap-4 text-xs">
-          <div className="flex items-center gap-1">
-            <span className="text-gray-500">24h</span>
-            <ChangeIndicator value={coin.change24h} />
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="text-gray-500">7d</span>
-            <ChangeIndicator value={coin.change7d} />
-          </div>
-        </div>
-
-        {sparkData.length > 0 && (
-          <div className="w-24 h-8">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={sparkData}>
-                <YAxis domain={["auto", "auto"]} hide />
-                <Tooltip
-                  content={({ active, payload }) =>
-                    active && payload?.[0] ? (
-                      <div className="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-white">
-                        {formatPrice(payload[0].value as number, "USD")}
-                      </div>
-                    ) : null
-                  }
-                />
-                <Line
-                  type="monotone"
-                  dataKey="v"
-                  dot={false}
-                  strokeWidth={1.5}
-                  stroke={coin.change7d >= 0 ? "#34d399" : "#f87171"}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        )}
-      </div>
-    </div>
+      {/* Chart */}
+      {sparkChartData.length > 2 && (
+        <LightweightChart
+          data={sparkChartData}
+          height={120}
+          color={active?.change7d >= 0 ? "#34d399" : "#f87171"}
+          type="line"
+          theme={theme}
+        />
+      )}
+    </Card>
   );
 }
