@@ -8,10 +8,9 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  CartesianGrid,
 } from "recharts";
 import { Card, ChangeIndicator, LoadingCard, ErrorCard } from "@/components/ui/Card";
-import { formatNumber, relativeTime } from "@/lib/formatters";
+import { formatNumber } from "@/lib/formatters";
 import { useState } from "react";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
@@ -21,11 +20,8 @@ interface IndexData {
   label: string;
   short: string;
   price: number | null;
-  previousClose: number;
   change: number;
   changePct: number;
-  currency: string;
-  error?: boolean;
   history: { date: string; value: number }[];
 }
 
@@ -42,95 +38,80 @@ export function MarketWidget() {
   const active = indices.find((i) => i.short === selected) ?? indices[0];
 
   return (
-    <Card
-      title="글로벌 증시"
-      subtitle={data.updatedAt ? relativeTime(data.updatedAt) + " 업데이트" : undefined}
-    >
-      {/* Tabs */}
-      <div className="flex gap-1 flex-wrap">
+    <Card title="글로벌 증시">
+      {/* Index selector + price */}
+      <div className="flex gap-1">
         {indices.map((idx) => (
           <button
             key={idx.short}
             onClick={() => setSelected(idx.short)}
-            className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+            className={`flex-1 py-2 px-2 rounded-lg text-center transition-colors ${
               selected === idx.short
-                ? "bg-blue-600 text-white"
-                : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+                ? "bg-gray-800 ring-1 ring-gray-700"
+                : "hover:bg-gray-800/50"
             }`}
           >
-            {idx.short}
+            <div className="text-[10px] text-gray-500">{idx.short}</div>
+            <div className="text-sm font-mono font-bold text-white">
+              {idx.price !== null ? formatNumber(idx.price, 0) : "—"}
+            </div>
+            <ChangeIndicator value={idx.changePct} />
           </button>
         ))}
       </div>
 
-      {active && (
-        <>
-          <div className="flex items-end justify-between">
-            <div>
-              <div className="text-xs text-gray-500">{active.label}</div>
-              <div className="text-2xl font-bold text-white font-mono">
-                {active.price !== null ? formatNumber(active.price, 2) : "—"}
-              </div>
-            </div>
-            <div className="text-right">
-              <ChangeIndicator value={active.changePct} />
-              <div className="text-xs text-gray-500 mt-0.5">
-                {active.change > 0 ? "+" : ""}
-                {formatNumber(active.change, 2)} pt
-              </div>
-            </div>
-          </div>
-
-          {active.history.length > 0 && (
-            <div className="h-36">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={active.history}>
-                  <defs>
-                    <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
-                      <stop
-                        offset="5%"
-                        stopColor={active.changePct >= 0 ? "#3b82f6" : "#ef4444"}
-                        stopOpacity={0.3}
-                      />
-                      <stop offset="95%" stopColor="#111827" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
-                  <XAxis
-                    dataKey="date"
-                    tick={{ fontSize: 10, fill: "#6b7280" }}
-                    tickFormatter={(v) => v.slice(5)}
-                    interval="preserveStartEnd"
+      {/* Chart */}
+      {active?.history?.length > 0 && (
+        <div className="h-40 -mx-2">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={active.history}>
+              <defs>
+                <linearGradient id={`grad-${active.short}`} x1="0" y1="0" x2="0" y2="1">
+                  <stop
+                    offset="0%"
+                    stopColor={active.changePct >= 0 ? "#3b82f6" : "#ef4444"}
+                    stopOpacity={0.2}
                   />
-                  <YAxis
-                    tick={{ fontSize: 10, fill: "#6b7280" }}
-                    domain={["auto", "auto"]}
-                    tickFormatter={(v) => formatNumber(v, 0)}
-                    width={55}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      background: "#1f2937",
-                      border: "1px solid #374151",
-                      borderRadius: 6,
-                      fontSize: 12,
-                    }}
-                    formatter={(v: number) => [formatNumber(v, 2), active.label]}
-                    labelStyle={{ color: "#9ca3af" }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="value"
-                    stroke={active.changePct >= 0 ? "#3b82f6" : "#ef4444"}
-                    fill="url(#grad)"
-                    strokeWidth={1.5}
-                    dot={false}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </>
+                  <stop offset="100%" stopColor="#030712" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <XAxis
+                dataKey="date"
+                tick={{ fontSize: 9, fill: "#4b5563" }}
+                tickFormatter={(v) => v.slice(5)}
+                interval="preserveStartEnd"
+                axisLine={false}
+                tickLine={false}
+              />
+              <YAxis
+                tick={{ fontSize: 9, fill: "#4b5563" }}
+                domain={["auto", "auto"]}
+                tickFormatter={(v) => formatNumber(v, 0)}
+                width={48}
+                axisLine={false}
+                tickLine={false}
+              />
+              <Tooltip
+                contentStyle={{
+                  background: "#1f2937",
+                  border: "1px solid #374151",
+                  borderRadius: 6,
+                  fontSize: 12,
+                }}
+                formatter={(v: number) => [formatNumber(v, 2), active.label]}
+                labelStyle={{ color: "#9ca3af" }}
+              />
+              <Area
+                type="monotone"
+                dataKey="value"
+                stroke={active.changePct >= 0 ? "#3b82f6" : "#ef4444"}
+                fill={`url(#grad-${active.short})`}
+                strokeWidth={1.5}
+                dot={false}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
       )}
     </Card>
   );

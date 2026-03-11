@@ -34,9 +34,11 @@ export function Card({ title, subtitle, children, className, badge }: CardProps)
 export function ChangeIndicator({
   value,
   suffix = "%",
+  size = "sm",
 }: {
   value: number | null;
   suffix?: string;
+  size?: "xs" | "sm";
 }) {
   if (value === null || value === undefined) return <span className="text-gray-500">—</span>;
   const positive = value > 0;
@@ -44,12 +46,12 @@ export function ChangeIndicator({
   return (
     <span
       className={clsx(
-        "text-sm font-medium",
+        "font-medium font-mono",
+        size === "xs" ? "text-xs" : "text-sm",
         zero ? "text-gray-400" : positive ? "text-emerald-400" : "text-red-400"
       )}
     >
-      {positive ? "▲" : zero ? "—" : "▼"} {Math.abs(value).toFixed(2)}
-      {suffix}
+      {positive ? "+" : ""}{value.toFixed(2)}{suffix}
     </span>
   );
 }

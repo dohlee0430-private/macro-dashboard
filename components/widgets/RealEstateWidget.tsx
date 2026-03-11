@@ -1,18 +1,8 @@
 "use client";
 
 import useSWR from "swr";
-import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Cell,
-  CartesianGrid,
-} from "recharts";
+import clsx from "clsx";
 import { Card, LoadingCard, ErrorCard } from "@/components/ui/Card";
-import { relativeTime } from "@/lib/formatters";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -20,7 +10,6 @@ interface RegionData {
   region: string;
   avgPricePerM2: number;
   yoyChange: number;
-  type: string;
 }
 
 export function RealEstateWidget() {
@@ -34,89 +23,62 @@ export function RealEstateWidget() {
   const regions: RegionData[] = data?.regions ?? [];
 
   return (
-    <Card
-      title="부동산"
-      subtitle={`아파트 매매가 (만원/m²) · ${data?.updatedAt ? relativeTime(data.updatedAt) + " 업데이트" : ""}`}
-    >
+    <Card title="아파트 매매가" subtitle="만원/m² · 정적 스냅샷">
       {data?.note && (
-        <div className="text-xs text-amber-400 bg-amber-900/20 border border-amber-800/30 rounded px-3 py-2">
+        <div className="text-xs text-amber-400/80 bg-amber-900/10 rounded px-2 py-1.5">
           {data.note}
         </div>
       )}
 
-      <div className="h-48">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={regions} layout="vertical">
-            <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" horizontal={false} />
-            <XAxis
-              type="number"
-              tick={{ fontSize: 10, fill: "#6b7280" }}
-              tickFormatter={(v) => v.toLocaleString()}
-            />
-            <YAxis
-              type="category"
-              dataKey="region"
-              tick={{ fontSize: 11, fill: "#d1d5db" }}
-              width={40}
-            />
-            <Tooltip
-              contentStyle={{
-                background: "#1f2937",
-                border: "1px solid #374151",
-                borderRadius: 6,
-                fontSize: 12,
-              }}
-              formatter={(v: number, _name, entry) => [
-                `${v.toLocaleString()}만원/m² (YoY: ${entry.payload.yoyChange > 0 ? "+" : ""}${entry.payload.yoyChange}%)`,
-                "평균 매매가",
-              ]}
-            />
-            <Bar dataKey="avgPricePerM2" radius={[0, 3, 3, 0]}>
-              {regions.map((r, i) => (
-                <Cell
-                  key={i}
-                  fill={r.yoyChange >= 0 ? "#3b82f6" : "#ef4444"}
-                  fillOpacity={0.85}
-                />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-
-      {/* YoY change badges */}
-      <div className="flex flex-wrap gap-2">
-        {regions.map((r) => (
-          <div
-            key={r.region}
-            className={`text-xs px-2 py-0.5 rounded flex items-center gap-1 ${
-              r.yoyChange > 0
-                ? "bg-emerald-900/30 text-emerald-400"
-                : r.yoyChange < 0
-                ? "bg-red-900/30 text-red-400"
-                : "bg-gray-800 text-gray-400"
-            }`}
-          >
-            <span>{r.region}</span>
-            <span>
-              {r.yoyChange > 0 ? "▲" : r.yoyChange < 0 ? "▼" : "—"}
-              {Math.abs(r.yoyChange)}%
-            </span>
-          </div>
-        ))}
+      {/* Compact table */}
+      <div className="overflow-x-auto -mx-1">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-[10px] text-gray-500 uppercase">
+              <th className="text-left py-1 px-2 font-medium">지역</th>
+              <th className="text-right py-1 px-2 font-medium">평균가</th>
+              <th className="text-right py-1 px-2 font-medium">YoY</th>
+              <th className="text-left py-1 px-2 font-medium w-24"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {regions.map((r) => (
+              <tr key={r.region} className="border-t border-gray-800/50 hover:bg-gray-800/30">
+                <td className="py-1.5 px-2 text-white font-medium">{r.region}</td>
+                <td className="py-1.5 px-2 text-right font-mono text-gray-300">
+                  {r.avgPricePerM2.toLocaleString()}
+                </td>
+                <td
+                  className={clsx(
+                    "py-1.5 px-2 text-right font-mono text-xs",
+                    r.yoyChange > 0 ? "text-emerald-400" : r.yoyChange < 0 ? "text-red-400" : "text-gray-400"
+                  )}
+                >
+                  {r.yoyChange > 0 ? "+" : ""}{r.yoyChange}%
+                </td>
+                <td className="py-1.5 px-2">
+                  <div className="flex items-center">
+                    <div
+                      className={clsx(
+                        "h-1.5 rounded-full",
+                        r.yoyChange > 0 ? "bg-emerald-400/60" : r.yoyChange < 0 ? "bg-red-400/60" : "bg-gray-600"
+                      )}
+                      style={{ width: `${Math.min(Math.abs(r.yoyChange) * 20, 100)}%` }}
+                    />
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       {data?.sources && (
-        <div className="text-xs text-gray-600 border-t border-gray-800 pt-2 mt-1">
+        <div className="text-[10px] text-gray-600 pt-1">
           출처:{" "}
           {data.sources.map((s: { url: string; name: string }, i: number) => (
             <span key={i}>
-              <a
-                href={s.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-500 hover:underline"
-              >
+              <a href={s.url} target="_blank" rel="noopener noreferrer" className="hover:text-blue-500">
                 {s.name}
               </a>
               {i < data.sources.length - 1 && " · "}
