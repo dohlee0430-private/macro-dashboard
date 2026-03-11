@@ -3,6 +3,7 @@
 import { OverviewStrip } from "@/components/widgets/OverviewStrip";
 import { MarketWidget } from "@/components/widgets/MarketWidget";
 import { CryptoWidget } from "@/components/widgets/CryptoWidget";
+import { ForexWidget } from "@/components/widgets/ForexWidget";
 import { M2Widget } from "@/components/widgets/M2Widget";
 import { PolicyWidget } from "@/components/widgets/PolicyWidget";
 import { RealEstateWidget } from "@/components/widgets/RealEstateWidget";
@@ -25,14 +26,17 @@ export default function DashboardPage() {
       <OverviewStrip />
 
       {/* Dashboard grid */}
-      <main className="max-w-7xl mx-auto px-4 py-5 space-y-4">
-        {/* Row 1: Markets + Crypto */}
-        <section className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-          <div className="lg:col-span-3">
+      <main className="max-w-7xl mx-auto px-4 py-4 space-y-4">
+        {/* Row 1: Markets + Crypto + Forex */}
+        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4">
+          <div className="lg:col-span-5">
             <MarketWidget />
           </div>
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-4">
             <CryptoWidget />
+          </div>
+          <div className="lg:col-span-3">
+            <ForexWidget />
           </div>
         </section>
 
@@ -43,13 +47,9 @@ export default function DashboardPage() {
         </section>
 
         {/* Row 3: Policy + Real Estate */}
-        <section className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-          <div className="lg:col-span-3">
-            <PolicyWidget />
-          </div>
-          <div className="lg:col-span-2">
-            <RealEstateWidget />
-          </div>
+        <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <PolicyWidget />
+          <RealEstateWidget />
         </section>
       </main>
 
